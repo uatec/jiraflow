@@ -12,6 +12,9 @@ namespace jiraflow
 {
     class Program
     {
+        private static void WriteLine(string text) {
+            Console.WriteLine($"{DateTime.Now.ToString("o")} - ${text}");
+        }
         private static string DefaultEpicLink;
         private static Jira jiraClient;
         private static WorkflowyClient workflowyClient;
@@ -72,7 +75,7 @@ namespace jiraflow
         {
             IEnumerable<Note> newNotes = findTerm(notes, "#nojira");
 
-            Console.WriteLine($"Found {newNotes.Count()} new workflowy items.");
+            WriteLine($"Found {newNotes.Count()} new workflowy items.");
 
             IEnumerable<Note> createdJiraItems = await newNotes.Select(async n => {
 
@@ -83,11 +86,12 @@ namespace jiraflow
                     await jiraData.SaveChangesAsync();
 
                     n.JiraId = jiraData.Key.Value;
+                    WriteLine($"Created - {jiraData.JiraIdentifier} - {jiraData.Description}");
                     return n;
                 }
                 catch ( Exception ex ) 
                 {
-                    Console.WriteLine($"Ex: {ex.Message} - {n.Text}");
+                    WriteLine($"Ex: {ex.Message} - {n.Text}");
                     return null;
                 }
             }).Await();
