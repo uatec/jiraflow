@@ -13,7 +13,7 @@ namespace jiraflow
     class Program
     {
         private static void WriteLine(string text) {
-            Console.WriteLine($"{DateTime.Now.ToString("o")} - ${text}");
+            Console.WriteLine($"{DateTime.Now.ToString("o")} - {text}");
         }
         private static string DefaultEpicLink;
         private static Jira jiraClient;
@@ -38,18 +38,26 @@ namespace jiraflow
             workflowyClient = new WorkflowyClient(configuration["host"], configuration["workflowytoken"]);
             projectCode = configuration["projectCode"];
             jiraAssignee = configuration["assignee"];
+            int interval = Int32.Parse(configuration["sync_interval"] ?? "30000");
 
-            try {
-                var notes = await workflowyClient.getNodes();
+            WriteLine($"Starting JiraFlow: Sync Interval = {interval/1000}");
 
-                await createJiraItems(notes, jiraAssignee);
-                // await closeCompetedJiraItems(notes);
+            do {
+                try {
+                    WriteLine("Beginning Synchronisation.");
+                    var notes = await workflowyClient.getNodes();
+
+                    await createJiraItems(notes, jiraAssignee);
+                    // await closeCompetedJiraItems(notes);
+                    WriteLine("Synchronisation Complete.");
+                }
+                catch(Exception ex)
+                {
+                    WriteLine($"Synchronisation Failed - {ex.Message} - ${ex.StackTrace}");
+                }
+                await Task.Delay(interval);
             }
-            catch(Exception ex)
-            {
-                Debugger.Break();
-                throw;
-            }
+            while (true);
         }
 
 
